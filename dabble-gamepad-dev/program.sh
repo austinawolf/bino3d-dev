@@ -1,1 +1,1 @@
-arduino-cli upload -p /dev/ttyUSB0 --fqbn arduino:avr:nano .
+arduino-cli upload -p /dev/ttyUSB1 --fqbn arduino:avr:nano .

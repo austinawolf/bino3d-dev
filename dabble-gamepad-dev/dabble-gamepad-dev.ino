@@ -3,6 +3,7 @@
 
 #include <Dabble.h>
 #include <SoftwareSerial.h>
+#include <Servo.h>
 
 // HM-10:
 //   TX -> Nano D2 (RX)
@@ -13,7 +14,6 @@ SoftwareSerial hm10(2, 3);
 // --------------------------------------------------
 // Motor control outputs
 // --------------------------------------------------
-
 const int LEFT_MOTOR_A  = 4;
 const int LEFT_MOTOR_B  = 5;
 const int RIGHT_MOTOR_A = 6;
@@ -21,9 +21,19 @@ const int RIGHT_MOTOR_B = 7;
 
 
 // --------------------------------------------------
+// Servo
+// --------------------------------------------------
+const int SERVO_PIN = 9;
+const int SERVO_RIGHT_LIMIT = 45;
+const int SERVO_LEFT_LIMIT = 135;
+const int SERVO_CENTER = 135;
+Servo headServo;
+
+static int currentServoPosition = 0;
+
+// --------------------------------------------------
 // Button events
 // --------------------------------------------------
-
 enum class GamePadButton {
     NONE,
     UP,
@@ -129,6 +139,36 @@ void roverIdle()
 }
 
 // --------------------------------------------------
+// Servo functions
+// --------------------------------------------------
+void servoCenter()
+{
+    currentServoPosition = SERVO_CENTER;
+    headServo.write(SERVO_CENTER);
+}
+
+void servoLeft()
+{
+    if (currentServoPosition == 0)
+    {
+        return;
+    }
+
+    headServo.write(--currentServoPosition);
+}
+
+void servoRight()
+{
+    if (currentServoPosition == 0)
+    {
+        return;
+    }
+
+    headServo.write(++currentServoPosition);
+}
+
+
+// --------------------------------------------------
 // Button event handler
 // --------------------------------------------------
 
@@ -139,48 +179,34 @@ void onButtonEvent(GamePadButton event)
         case GamePadButton::UP:
             roverForward();
             break;
-
         case GamePadButton::DOWN:
             roverReverse();
             break;
-
         case GamePadButton::RIGHT:
             roverRight();
             break;
-
         case GamePadButton::LEFT:
             roverLeft();
             break;
-
         case GamePadButton::NONE:
             roverIdle();
             break;
-            
         case GamePadButton::SQUARE:
+            servoLeft();
+            break;
         case GamePadButton::CIRCLE:
+            servoRight();
+            break;
         case GamePadButton::CROSS:
+            break;
         case GamePadButton::TRIANGLE:
+            servoCenter();
+            break;
         case GamePadButton::START:
+            break;
         case GamePadButton::SELECT:
             break;
     }
-}
-
-
-// --------------------------------------------------
-// Setup
-// --------------------------------------------------
-
-void setup()
-{
-    pinMode(LEFT_MOTOR_A, OUTPUT);
-    pinMode(LEFT_MOTOR_B, OUTPUT);
-
-    pinMode(RIGHT_MOTOR_A, OUTPUT);
-    pinMode(RIGHT_MOTOR_B, OUTPUT);
-
-    hm10.begin(9600);
-    Dabble.begin(hm10);
 }
 
 // --------------------------------------------------
@@ -218,6 +244,28 @@ void logButtonEvent(GamePadButton event)
 
         previousEvent = event;
     }
+}
+
+// --------------------------------------------------
+// Setup
+// --------------------------------------------------
+void setup()
+{
+    pinMode(LEFT_MOTOR_A, OUTPUT);
+    pinMode(LEFT_MOTOR_B, OUTPUT);
+
+    pinMode(RIGHT_MOTOR_A, OUTPUT);
+    pinMode(RIGHT_MOTOR_B, OUTPUT);
+
+    hm10.begin(9600);
+    
+    Serial.begin(115200); 
+    
+    Dabble.begin(hm10);
+
+    headServo.attach(SERVO_PIN);
+
+    Serial.println("Ready.");
 }
 
 // --------------------------------------------------
