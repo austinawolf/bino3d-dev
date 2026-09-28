@@ -24,79 +24,35 @@ enum class GamePadButton {
 
 GamePadButton getGamePadButton()
 {
-    GamePadButton button = GamePadButton::NONE;
+    if (GamePad.isUpPressed())       return GamePadButton::UP;
+    if (GamePad.isDownPressed())     return GamePadButton::DOWN;
+    if (GamePad.isLeftPressed())     return GamePadButton::LEFT;
+    if (GamePad.isRightPressed())    return GamePadButton::RIGHT;
+    if (GamePad.isSquarePressed())   return GamePadButton::SQUARE;
+    if (GamePad.isCirclePressed())   return GamePadButton::CIRCLE;
+    if (GamePad.isCrossPressed())    return GamePadButton::CROSS;
+    if (GamePad.isTrianglePressed()) return GamePadButton::TRIANGLE;
+    if (GamePad.isStartPressed())    return GamePadButton::START;
+    if (GamePad.isSelectPressed())   return GamePadButton::SELECT;
 
-    if (GamePad.isUpPressed()) {
-        button = GamePadButton::UP;
-    }
-    else if (GamePad.isDownPressed()) {
-        button = GamePadButton::DOWN;
-    }
-    else if (GamePad.isLeftPressed()) {
-        button = GamePadButton::LEFT;
-    }
-    else if (GamePad.isRightPressed()) {
-        button = GamePadButton::RIGHT;
-    }
-    else if (GamePad.isSquarePressed()) {
-        button = GamePadButton::SQUARE;
-    }
-    else if (GamePad.isCirclePressed()) {
-        button = GamePadButton::CIRCLE;
-    }
-    else if (GamePad.isCrossPressed()) {
-        button = GamePadButton::CROSS;
-    }
-    else if (GamePad.isTrianglePressed()) {
-        button = GamePadButton::TRIANGLE;
-    }
-    else if (GamePad.isStartPressed()) {
-        button = GamePadButton::START;
-    }
-    else if (GamePad.isSelectPressed()) {
-        button = GamePadButton::SELECT;
-    }
+    return GamePadButton::NONE;
+}
 
-    if (button != GamePadButton::NONE) {
-        Serial.print("Button: ");
-
-        switch (button) {
-            case GamePadButton::UP:
-                Serial.println("UP");
-                break;
-            case GamePadButton::DOWN:
-                Serial.println("DOWN");
-                break;
-            case GamePadButton::LEFT:
-                Serial.println("LEFT");
-                break;
-            case GamePadButton::RIGHT:
-                Serial.println("RIGHT");
-                break;
-            case GamePadButton::SQUARE:
-                Serial.println("SQUARE");
-                break;
-            case GamePadButton::CIRCLE:
-                Serial.println("CIRCLE");
-                break;
-            case GamePadButton::CROSS:
-                Serial.println("CROSS");
-                break;
-            case GamePadButton::TRIANGLE:
-                Serial.println("TRIANGLE");
-                break;
-            case GamePadButton::START:
-                Serial.println("START");
-                break;
-            case GamePadButton::SELECT:
-                Serial.println("SELECT");
-                break;
-            default:
-                break;
-        }
+const char* buttonName(GamePadButton button)
+{
+    switch (button) {
+        case GamePadButton::UP:       return "UP";
+        case GamePadButton::DOWN:     return "DOWN";
+        case GamePadButton::LEFT:     return "LEFT";
+        case GamePadButton::RIGHT:    return "RIGHT";
+        case GamePadButton::SQUARE:   return "SQUARE";
+        case GamePadButton::CIRCLE:   return "CIRCLE";
+        case GamePadButton::CROSS:    return "CROSS";
+        case GamePadButton::TRIANGLE: return "TRIANGLE";
+        case GamePadButton::START:    return "START";
+        case GamePadButton::SELECT:   return "SELECT";
+        default:                      return "NONE";
     }
-
-    return button;
 }
 
 void setup()
@@ -110,36 +66,29 @@ void setup()
 
     Serial.println("Dabble GamePad ready");
 }
-
 void loop()
 {
     Dabble.processInput();
 
-    GamePadButton button = getGamePadButton();
+    static GamePadButton previousButton = GamePadButton::NONE;
 
-    // Handle button here
-    switch (button) {
-        case GamePadButton::UP:
-            // Move forward
-            break;
+    GamePadButton currentButton = getGamePadButton();
 
-        case GamePadButton::DOWN:
-            // Move backward
-            break;
+    // Key was just depressed
+    if (currentButton != GamePadButton::NONE &&
+        currentButton != previousButton) {
 
-        case GamePadButton::LEFT:
-            // Turn left
-            break;
-
-        case GamePadButton::RIGHT:
-            // Turn right
-            break;
-
-        case GamePadButton::NONE:
-            // Nothing pressed
-            break;
-
-        default:
-            break;
+        Serial.print("PRESSED: ");
+        Serial.println(buttonName(currentButton));
     }
+
+    // Key was just released
+    if (currentButton == GamePadButton::NONE &&
+        previousButton != GamePadButton::NONE) {
+
+        Serial.print("RELEASED: ");
+        Serial.println(buttonName(previousButton));
+    }
+
+    previousButton = currentButton;
 }
