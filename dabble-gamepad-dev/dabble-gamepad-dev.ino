@@ -2,11 +2,27 @@
 #define INCLUDE_GAMEPAD_MODULE
 
 #include <Dabble.h>
+#include <SoftwareSerial.h>
 
 // HM-10:
 //   TX -> Nano D2 (RX)
 //   RX -> Nano D3 (TX)
 SoftwareSerial hm10(2, 3);
+
+
+// --------------------------------------------------
+// Motor control outputs
+// --------------------------------------------------
+
+const int LEFT_MOTOR_A  = 4;
+const int LEFT_MOTOR_B  = 5;
+const int RIGHT_MOTOR_A = 6;
+const int RIGHT_MOTOR_B = 7;
+
+
+// --------------------------------------------------
+// Button events
+// --------------------------------------------------
 
 enum class GamePadButton {
     NONE,
@@ -22,25 +38,160 @@ enum class GamePadButton {
     SELECT
 };
 
+
+// --------------------------------------------------
+// Get GamePad button
+// --------------------------------------------------
+
 GamePadButton getGamePadButton()
 {
-    if (GamePad.isUpPressed())       return GamePadButton::UP;
-    if (GamePad.isDownPressed())     return GamePadButton::DOWN;
-    if (GamePad.isLeftPressed())     return GamePadButton::LEFT;
-    if (GamePad.isRightPressed())    return GamePadButton::RIGHT;
-    if (GamePad.isSquarePressed())   return GamePadButton::SQUARE;
-    if (GamePad.isCirclePressed())   return GamePadButton::CIRCLE;
-    if (GamePad.isCrossPressed())    return GamePadButton::CROSS;
-    if (GamePad.isTrianglePressed()) return GamePadButton::TRIANGLE;
-    if (GamePad.isStartPressed())    return GamePadButton::START;
-    if (GamePad.isSelectPressed())   return GamePadButton::SELECT;
+    if (GamePad.isUpPressed())
+        return GamePadButton::UP;
+
+    if (GamePad.isDownPressed())
+        return GamePadButton::DOWN;
+
+    if (GamePad.isLeftPressed())
+        return GamePadButton::LEFT;
+
+    if (GamePad.isRightPressed())
+        return GamePadButton::RIGHT;
+
+    if (GamePad.isSquarePressed())
+        return GamePadButton::SQUARE;
+
+    if (GamePad.isCirclePressed())
+        return GamePadButton::CIRCLE;
+
+    if (GamePad.isCrossPressed())
+        return GamePadButton::CROSS;
+
+    if (GamePad.isTrianglePressed())
+        return GamePadButton::TRIANGLE;
+
+    if (GamePad.isStartPressed())
+        return GamePadButton::START;
+
+    if (GamePad.isSelectPressed())
+        return GamePadButton::SELECT;
 
     return GamePadButton::NONE;
 }
 
-const char* buttonName(GamePadButton button)
+
+// --------------------------------------------------
+// Rover functions
+// --------------------------------------------------
+
+void roverForward()
 {
-    switch (button) {
+    digitalWrite(LEFT_MOTOR_A, HIGH);
+    digitalWrite(LEFT_MOTOR_B, LOW);
+
+    digitalWrite(RIGHT_MOTOR_A, HIGH);
+    digitalWrite(RIGHT_MOTOR_B, LOW);
+}
+
+void roverReverse()
+{
+    digitalWrite(LEFT_MOTOR_A, LOW);
+    digitalWrite(LEFT_MOTOR_B, HIGH);
+
+    digitalWrite(RIGHT_MOTOR_A, LOW);
+    digitalWrite(RIGHT_MOTOR_B, HIGH);
+}
+
+void roverRight()
+{
+    digitalWrite(LEFT_MOTOR_A, HIGH);
+    digitalWrite(LEFT_MOTOR_B, LOW);
+
+    digitalWrite(RIGHT_MOTOR_A, LOW);
+    digitalWrite(RIGHT_MOTOR_B, HIGH);
+}
+
+void roverLeft()
+{
+    digitalWrite(LEFT_MOTOR_A, LOW);
+    digitalWrite(LEFT_MOTOR_B, HIGH);
+
+    digitalWrite(RIGHT_MOTOR_A, HIGH);
+    digitalWrite(RIGHT_MOTOR_B, LOW);
+}
+
+void roverIdle()
+{
+    digitalWrite(LEFT_MOTOR_A, LOW);
+    digitalWrite(LEFT_MOTOR_B, LOW);
+
+    digitalWrite(RIGHT_MOTOR_A, LOW);
+    digitalWrite(RIGHT_MOTOR_B, LOW);
+}
+
+// --------------------------------------------------
+// Button event handler
+// --------------------------------------------------
+
+void onButtonEvent(GamePadButton event)
+{
+    switch (event)
+    {
+        case GamePadButton::UP:
+            roverForward();
+            break;
+
+        case GamePadButton::DOWN:
+            roverReverse();
+            break;
+
+        case GamePadButton::RIGHT:
+            roverRight();
+            break;
+
+        case GamePadButton::LEFT:
+            roverLeft();
+            break;
+
+        case GamePadButton::NONE:
+            roverIdle();
+            break;
+            
+        case GamePadButton::SQUARE:
+        case GamePadButton::CIRCLE:
+        case GamePadButton::CROSS:
+        case GamePadButton::TRIANGLE:
+        case GamePadButton::START:
+        case GamePadButton::SELECT:
+            break;
+    }
+}
+
+
+// --------------------------------------------------
+// Setup
+// --------------------------------------------------
+
+void setup()
+{
+    pinMode(LEFT_MOTOR_A, OUTPUT);
+    pinMode(LEFT_MOTOR_B, OUTPUT);
+
+    pinMode(RIGHT_MOTOR_A, OUTPUT);
+    pinMode(RIGHT_MOTOR_B, OUTPUT);
+
+    hm10.begin(9600);
+    Dabble.begin(hm10);
+}
+
+// --------------------------------------------------
+// Util
+// --------------------------------------------------
+
+const char* getButtonName(GamePadButton event)
+{
+    switch (event)
+    {
+        case GamePadButton::NONE:     return "NONE";
         case GamePadButton::UP:       return "UP";
         case GamePadButton::DOWN:     return "DOWN";
         case GamePadButton::LEFT:     return "LEFT";
@@ -51,44 +202,38 @@ const char* buttonName(GamePadButton button)
         case GamePadButton::TRIANGLE: return "TRIANGLE";
         case GamePadButton::START:    return "START";
         case GamePadButton::SELECT:   return "SELECT";
-        default:                      return "NONE";
+    }
+
+    return "UNKNOWN";
+}
+
+void logButtonEvent(GamePadButton event)
+{
+    static GamePadButton previousEvent = GamePadButton::NONE;
+
+    if (event != previousEvent)
+    {
+        Serial.print("Button event: ");
+        Serial.println(getButtonName(event));
+
+        previousEvent = event;
     }
 }
 
-void setup()
-{
-    Serial.begin(115200);
+// --------------------------------------------------
+// Main loop
+// --------------------------------------------------
 
-    hm10.begin(9600);
-
-    // Tell Dabble to use the HM-10 serial connection.
-    Dabble.begin(hm10);
-
-    Serial.println("Dabble GamePad ready");
-}
 void loop()
 {
     Dabble.processInput();
 
-    static GamePadButton previousButton = GamePadButton::NONE;
+    GamePadButton event = getGamePadButton();
 
-    GamePadButton currentButton = getGamePadButton();
+    // log the event if its changed
+    logButtonEvent(event);
 
-    // Key was just depressed
-    if (currentButton != GamePadButton::NONE &&
-        currentButton != previousButton) {
-
-        Serial.print("PRESSED: ");
-        Serial.println(buttonName(currentButton));
-    }
-
-    // Key was just released
-    if (currentButton == GamePadButton::NONE &&
-        previousButton != GamePadButton::NONE) {
-
-        Serial.print("RELEASED: ");
-        Serial.println(buttonName(previousButton));
-    }
-
-    previousButton = currentButton;
+    // take action on button event
+    onButtonEvent(event);
 }
+
