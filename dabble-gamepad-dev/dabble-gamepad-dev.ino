@@ -14,19 +14,19 @@ SoftwareSerial hm10(2, 3);
 // --------------------------------------------------
 // Motor control outputs
 // --------------------------------------------------
-const int LEFT_MOTOR_A  = 4;
-const int LEFT_MOTOR_B  = 5;
-const int RIGHT_MOTOR_A = 6;
-const int RIGHT_MOTOR_B = 7;
+const int LEFT_MOTOR_A  = 6;
+const int LEFT_MOTOR_B  = 7;
+const int RIGHT_MOTOR_A = 5;
+const int RIGHT_MOTOR_B = 4;
 
 
 // --------------------------------------------------
 // Servo
 // --------------------------------------------------
-const int SERVO_PIN = 9;
+const int SERVO_PIN = 8;
 const int SERVO_RIGHT_LIMIT = 45;
 const int SERVO_LEFT_LIMIT = 135;
-const int SERVO_CENTER = 135;
+const int SERVO_CENTER = 90;
 Servo headServo;
 
 static int currentServoPosition = 0;
@@ -144,7 +144,7 @@ void roverIdle()
 void servoCenter()
 {
     currentServoPosition = SERVO_CENTER;
-    headServo.write(SERVO_CENTER);
+    headServo.write(90);
 }
 
 void servoLeft()
@@ -154,7 +154,7 @@ void servoLeft()
         return;
     }
 
-    headServo.write(--currentServoPosition);
+    headServo.write(120);
 }
 
 void servoRight()
@@ -164,7 +164,7 @@ void servoRight()
         return;
     }
 
-    headServo.write(++currentServoPosition);
+    headServo.write(60);
 }
 
 
